@@ -120,6 +120,16 @@ func Entry(method string, peer *signal.Peer, msg json.RawMessage, claims *signal
 		if topErr = ParseProtoo(msg, claims, &msgData); topErr == nil {
 			result, topErr = trickle(peer, msgData)
 		}
+	case proto.ClientGetRoomUsers:
+		var msgData proto.RoomIdParams
+		if topErr = ParseProtoo(msg, claims, &msgData); topErr == nil {
+			result, topErr = getRoomUsers(peer, msgData)
+		}
+	case proto.ClientRoomStreams:
+		var msgData proto.RoomIdParams
+		if topErr = ParseProtoo(msg, claims, &msgData); topErr == nil {
+			result, topErr = getRoomStreams(peer, msgData)
+		}
 	}
 
 	if topErr != nil {

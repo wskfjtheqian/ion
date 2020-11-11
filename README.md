@@ -102,3 +102,9 @@ For dev and more options see the wiki
 *Original Author: [adwpc](https://github.com/adwpc) [cloudwebrtc](https://github.com/cloudwebrtc)*
 
 *Community Hero: [Sean-Der](https://github.com/Sean-Der)*
+
+##Branch description
+
+1. Add the function of getting the room user list
+
+2. Add the function of getting the list of all the streams in the room

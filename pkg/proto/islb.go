@@ -30,3 +30,12 @@ type GetSFURPCParams struct {
 	Name    string
 	Service string
 }
+
+type UserInfoResp struct {
+	ClientUserInfo
+	UserInfo
+}
+
+type RoomIdParams struct {
+	RID RID `json:"rid"`
+}

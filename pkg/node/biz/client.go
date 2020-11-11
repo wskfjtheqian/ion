@@ -303,3 +303,62 @@ func trickle(peer *signal.Peer, msg proto.TrickleMsg) (interface{}, *nprotoo.Err
 	sfu.AsyncRequest(proto.ClientTrickleICE, util.Map("mid", mid, "trickle", trickle))
 	return emptyMap, nil
 }
+
+func getRoomUsers(peer *signal.Peer, msg proto.RoomIdParams) (interface{}, *nprotoo.Error) {
+	log.Infof("biz.join peer.ID()=%s msg=%v", peer.ID(), msg)
+	rid := msg.RID
+
+	// Validate
+	if msg.RID == "" {
+		return nil, ridError
+	}
+
+	islb, found := getRPCForIslb()
+	if !found {
+		return nil, util.NewNpError(500, "Not found any node for islb.")
+	}
+
+	result, err := islb.SyncRequest(proto.IslbGetRoomUsers, rid)
+	if err != nil {
+		log.Errorf("IslbGetPubs failed %v", err.Error())
+		return nil, util.NewNpError(500, err.Reason)
+	}
+	var users []*proto.UserInfoResp
+	if err := result.Unmarshal(&users); err != nil {
+		log.Errorf("Unmarshal pub response %v", err)
+		return nil, util.NewNpError(500, err.Reason)
+	}
+	log.Infof("IslbGetPubs: result=%v", users)
+
+	return users, nil
+}
+
+func getRoomStreams(peer *signal.Peer, msg proto.RoomIdParams) (interface{}, *nprotoo.Error) {
+	log.Infof("biz.join peer.ID()=%s msg=%v", peer.ID(), msg)
+	rid := msg.RID
+
+	// Validate
+	if msg.RID == "" {
+		return nil, ridError
+	}
+
+	islb, found := getRPCForIslb()
+	if !found {
+		return nil, util.NewNpError(500, "Not found any node for islb.")
+	}
+
+	result, err := islb.SyncRequest(proto.IslbGetRoomStreams, rid)
+	if err != nil {
+		log.Errorf("IslbGetRoomStreams failed %v", err.Error())
+		return nil, util.NewNpError(500, err.Reason)
+	}
+
+	var streams []*proto.StreamAddMsg
+	if err := result.Unmarshal(&streams); err != nil {
+		log.Errorf("Unmarshal pub response %v", err)
+		return nil, util.NewNpError(500, err.Reason)
+	}
+	log.Infof("IslbGetRoomStreams: result=%v", streams)
+
+	return streams, nil
+}

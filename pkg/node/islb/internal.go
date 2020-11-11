@@ -506,6 +506,16 @@ func handleRequest(rpcID string) {
 				if err = msg.Unmarshal(&msgData); err == nil {
 					result, err = broadcast(msgData)
 				}
+			case proto.IslbGetRoomUsers:
+				var msgData proto.RoomIdParams
+				if err = msg.Unmarshal(&msgData); err == nil {
+					result, err = getRoomUsers(msgData)
+				}
+			case proto.IslbGetRoomStreams:
+				var msgData proto.RoomIdParams
+				if err = msg.Unmarshal(&msgData); err == nil {
+					result, err = getRoomStreams(msgData)
+				}
 			}
 
 			if err != nil {
@@ -515,4 +525,89 @@ func handleRequest(rpcID string) {
 			}
 		}(request, accept, reject)
 	})
+}
+
+func getRoomUsers(data proto.RoomIdParams) (interface{}, *nprotoo.Error) {
+	ukey := proto.UserInfo{
+		DC:  dc,
+		RID: data.RID,
+	}.BuildKey()
+	log.Infof("getRoomUsers: set %s => %v", ukey, &data)
+	var list []*proto.UserInfoResp
+	for _, path := range redis.Keys(ukey + "*") {
+		fields := redis.HGetAll(path)
+		if infoStr, ok := fields["info"]; ok {
+
+			var userInfo = proto.ClientUserInfo{}
+			if err := json.Unmarshal([]byte(infoStr), &userInfo); err != nil {
+				log.Errorf("Unmarshal getRoomUsers extra info %v", err)
+			} else {
+				list = append(list, &proto.UserInfoResp{
+					ClientUserInfo: userInfo,
+					UserInfo: proto.UserInfo{
+						DC:  dc,
+						RID: data.RID,
+						UID: proto.UID(path[len(ukey)-1:]),
+					},
+				})
+			}
+		}
+		log.Infof("getRoomUsers: set %s => %v", ukey, &fields)
+	}
+
+	return list, nil
+}
+
+func getRoomStreams(data proto.RoomIdParams) (interface{}, *nprotoo.Error) {
+	ukey := proto.MediaInfo{
+		DC:  dc,
+		RID: data.RID,
+	}.BuildKey()
+	log.Infof("getRoomStreams: set %s => %v", ukey, &data)
+	var list []*proto.StreamAddMsg
+
+	for _, path := range redis.Keys(ukey + "*") {
+		fields := redis.HGetAll(path)
+		split := strings.Split(path, "/")
+
+		var streamInfo = proto.StreamAddMsg{}
+		streamInfo.DC = dc
+		streamInfo.RID = data.RID
+		streamInfo.UID = proto.UID(split[3])
+		streamInfo.MID = proto.MID(split[6])
+		streamInfo.NID = split[1]
+		streamInfo.Tracks = make(proto.TrackMap)
+		for key, value := range fields {
+			if key == "description" {
+				streamInfo.Description = value
+			} else if strings.Index(key, "track/") == 0 {
+				var trackInfos []proto.TrackInfo
+				if err := json.Unmarshal([]byte(value), &trackInfos); err != nil {
+					log.Errorf("Unmarshal getRoomUsers extra info %v", err)
+				} else {
+					tracksName := key[6:]
+					streamInfo.Tracks[tracksName] = trackInfos
+				}
+			}
+		}
+
+		ukey := proto.UserInfo{
+			DC:  dc,
+			RID: streamInfo.RID,
+			UID: streamInfo.UID,
+		}.BuildKey()
+
+		uFields := redis.HGetAll(ukey)
+
+		var extraInfo proto.ClientUserInfo = proto.ClientUserInfo{}
+		if infoStr, ok := uFields["info"]; ok {
+			if err := json.Unmarshal([]byte(infoStr), &extraInfo); err != nil {
+				log.Errorf("Unmarshal pub extra info %v", err)
+			}
+			streamInfo.Info = extraInfo
+		}
+		list = append(list, &streamInfo)
+	}
+
+	return list, nil
 }

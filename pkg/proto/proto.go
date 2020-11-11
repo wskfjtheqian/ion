@@ -8,14 +8,16 @@ import (
 
 const (
 	// client to ion
-	ClientJoin        = "join"
-	ClientLeave       = "leave"
-	ClientPublish     = "publish"
-	ClientUnPublish   = "unpublish"
-	ClientSubscribe   = "subscribe"
-	ClientUnSubscribe = "unsubscribe"
-	ClientBroadcast   = "broadcast"
-	ClientTrickleICE  = "trickle"
+	ClientJoin         = "join"
+	ClientLeave        = "leave"
+	ClientPublish      = "publish"
+	ClientUnPublish    = "unpublish"
+	ClientSubscribe    = "subscribe"
+	ClientUnSubscribe  = "unsubscribe"
+	ClientBroadcast    = "broadcast"
+	ClientTrickleICE   = "trickle"
+	ClientGetRoomUsers = "getRoomUsers"
+	ClientRoomStreams  = "getRoomStreams"
 
 	// ion to client
 	ClientOnJoin         = "peer-join"
@@ -24,11 +26,13 @@ const (
 	ClientOnStreamRemove = "stream-remove"
 
 	// ion to islb
-	IslbFindService  = "findService"
-	IslbGetPubs      = "getPubs"
-	IslbGetMediaInfo = "getMediaInfo"
-	IslbRelay        = "relay"
-	IslbUnrelay      = "unRelay"
+	IslbFindService    = "findService"
+	IslbGetPubs        = "getPubs"
+	IslbGetMediaInfo   = "getMediaInfo"
+	IslbRelay          = "relay"
+	IslbUnrelay        = "unRelay"
+	IslbGetRoomUsers   = ClientGetRoomUsers
+	IslbGetRoomStreams = ClientRoomStreams
 
 	IslbKeepAlive      = "keepAlive"
 	IslbClientOnJoin   = ClientOnJoin
